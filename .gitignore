@@ -1,0 +1,10 @@
+# Exclude Node.js modules
+node_modules/
+
+# Exclude uploaded files
+src/files/deals/
+
+# Environment variables
+.env
+.env.local
+.env.production

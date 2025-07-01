@@ -1,0 +1,168 @@
+const Deal = require("../models/deal");
+
+// Helper function to generate slug
+const generateSlug = (title) => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .trim('-'); // Remove leading/trailing hyphens
+};
+
+// Helper function to generate unique slug
+const generateUniqueSlug = async (title, existingId = null) => {
+  let slug = generateSlug(title);
+  let counter = 1;
+  let uniqueSlug = slug;
+
+  while (true) {
+    const query = { slug: uniqueSlug };
+    if (existingId) {
+      query._id = { $ne: existingId };
+    }
+    
+    const existingDeal = await Deal.findOne(query);
+    if (!existingDeal) {
+      break;
+    }
+    uniqueSlug = `${slug}-${counter}`;
+    counter++;
+  }
+
+  return uniqueSlug;
+};
+
+exports.createDeal = async (dealData) => {
+  // Generate unique slug if not provided
+  if (!dealData.slug) {
+    dealData.slug = await generateUniqueSlug(dealData.deal_title);
+  } else {
+    // Check if provided slug is unique
+    const existingDeal = await Deal.findOne({ slug: dealData.slug });
+    if (existingDeal) {
+      throw new Error("Slug already exists");
+    }
+  }
+  
+  return await Deal.create(dealData);
+};
+
+exports.updateDeal = async (id, dealData) => {
+  // Generate unique slug if deal_title is being updated
+  if (dealData.deal_title && !dealData.slug) {
+    dealData.slug = await generateUniqueSlug(dealData.deal_title, id);
+  } else if (dealData.slug) {
+    // Check if provided slug is unique (excluding current deal)
+    const existingDeal = await Deal.findOne({ slug: dealData.slug, _id: { $ne: id } });
+    if (existingDeal) {
+      throw new Error("Slug already exists");
+    }
+  }
+
+  const deal = await Deal.findByIdAndUpdate(id, dealData, { new: true });
+  if (!deal) throw new Error("Deal not found");
+  return deal;
+};
+
+exports.getDealById = async (id) => {
+  return await Deal.findById(id)
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+// New method to get deal by slug
+exports.getDealBySlug = async (slug) => {
+  return await Deal.findOne({ slug })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getAllDeals = async () => {
+  return await Deal.find()
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.deleteDeal = async (id) => {
+  const deal = await Deal.findByIdAndDelete(id);
+  if (!deal) throw new Error("Deal not found");
+};
+
+exports.getDealsBySector = async (sectorId) => {
+  return await Deal.find({ sector: sectorId })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getDealsByStage = async (stageId) => {
+  return await Deal.find({ stage: stageId })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getDealsByGeography = async (geography) => {
+  return await Deal.find({ geography })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getDealsByTicketSize = async (ticketSizeId) => {
+  return await Deal.find({ ticket_size_range: ticketSizeId })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getDealsByStatus = async (statusId) => {
+  return await Deal.find({ status: statusId })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getDealsByPriority = async (priority) => {
+  return await Deal.find({ deal_priority: priority })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.getDealsByVisibility = async (visibility) => {
+  return await Deal.find({ visibility })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+};
+
+exports.searchDeals = async (searchTerm) => {
+  return await Deal.find({
+    $or: [
+      { deal_title: { $regex: searchTerm, $options: 'i' } },
+      { slug: { $regex: searchTerm, $options: 'i' } },
+      { summary: { $regex: searchTerm, $options: 'i' } },
+      { full_description: { $regex: searchTerm, $options: 'i' } },
+      { geography: { $regex: searchTerm, $options: 'i' } }
+    ]
+  })
+    .populate('sector', 'name')
+    .populate('stage', 'name')
+    .populate('ticket_size_range', 'name')
+    .populate('status', 'name');
+}; 
