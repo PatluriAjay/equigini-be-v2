@@ -11,8 +11,8 @@ exports.getPublicHomeData = async () => {
       .limit(4)
       .select('title slug excerpt featured_image read_time createdAt');
 
-    // Get latest 3 active deals
-    const latestDeals = await Deal.find({ is_active: true })
+    // Get latest 3 active deals (priority only)
+    const latestDeals = await Deal.find({ is_active: true, deal_priority: { $ne: false } })
       .sort({ createdAt: -1 })
       .limit(4)
       .select('deal_title slug sector stage geography ticket_size_range expected_irr timeline summary image deal_icon createdAt');

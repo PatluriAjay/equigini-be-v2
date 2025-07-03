@@ -27,7 +27,10 @@ exports.getAllEOIs = async (req, res) => {
     res.json({
       result_code: 200,
       status: "S",
-      result_info: sortedEOIs,
+      result_info: sortedEOIs.map(eoi => ({
+        ...eoi.toObject(),
+        pdf_path: eoi.pdf_path || null
+      })),
     });
   } catch (err) {
     res.status(400).json({

@@ -241,6 +241,26 @@ exports.loginInvestor = async (req, res) => {
       });
     }
 
+    // Find investor by email
+    const investor = await require("../models/investor").findOne({ email });
+    if (!investor) {
+      return res.status(401).json({
+        result_code: 401,
+        status: "E",
+        error_info: "Invalid email or password",
+      });
+    }
+
+    // Check approval status
+    if (!investor.is_approved) {
+      return res.status(403).json({
+        result_code: 403,
+        status: "E",
+        error_info: "Your account isn’t approved yet. Please wait."
+      });
+    }
+
+    // Delegate to service for password check and token
     const result = await investorService.loginInvestor(email, password);
     res.json({
       result_code: 200,

@@ -39,7 +39,8 @@ const ndaSchema = new mongoose.Schema({
   is_active: { 
     type: Boolean, 
     default: true 
-  }
+  },
+  pdf_path: { type: String },
 }, { 
   timestamps: true 
 });

@@ -86,13 +86,15 @@ exports.isNDASigned = async (req, res) => {
 exports.getAllNDAAgreements = async (req, res) => {
   try {
     const ndaAgreements = await ndaService.getAllNDAAgreements();
-    
     res.status(200).json({
       result_code: 200,
       status: "S",
       result_info: {
         count: ndaAgreements.length,
-        agreements: ndaAgreements
+        agreements: ndaAgreements.map(nda => ({
+          ...nda.toObject(),
+          pdf_path: nda.pdf_path || null
+        }))
       }
     });
   } catch (err) {
@@ -108,13 +110,15 @@ exports.getAllNDAAgreements = async (req, res) => {
 exports.getAllSignedNDAs = async (req, res) => {
   try {
     const signedNDAs = await ndaService.getAllSignedNDAs();
-    
     res.status(200).json({
       result_code: 200,
       status: "S",
       result_info: {
         count: signedNDAs.length,
-        signed_agreements: signedNDAs
+        signed_agreements: signedNDAs.map(nda => ({
+          ...nda.toObject(),
+          pdf_path: nda.pdf_path || null
+        }))
       }
     });
   } catch (err) {
