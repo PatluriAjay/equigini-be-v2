@@ -3,6 +3,8 @@ node_modules/
 
 # Exclude uploaded files
 src/files/deals/
+src/files/blogs/
+src/files/testimonials/
 
 # Environment variables
 .env

@@ -18,6 +18,8 @@ app.use('/files', express.static(path.join(__dirname, 'files')));
 
 // Middleware
 const { handleFileUpload } = require("./middleware/fileUpload");
+const { handleMultipleBlogFiles } = require("./middleware/blogFileUpload");
+const { handleTestimonialImageUpload } = require("./middleware/testimonialFileUpload");
 
 // Controllers
 const sectorController = require("./controllers/sectorController");
@@ -29,6 +31,9 @@ const dealController = require("./controllers/dealController");
 const eoiController = require("./controllers/eoiController");
 const watchListController = require("./controllers/watchListController");
 const ndaController = require("./controllers/ndaController");
+const blogController = require("./controllers/blogController");
+const testimonialController = require("./controllers/testimonialController");
+const publicHomeController = require("./controllers/publicHomeController");
 
 // Sector endpoints
 app.post("/api/createSector", sectorController.createSector);
@@ -98,13 +103,27 @@ app.get("/api/getDealBySlug/:slug", dealController.getDealBySlug);
 app.get("/api/getAllDeals", dealController.getAllDeals);
 app.put("/api/updateDeal/:id", handleFileUpload, dealController.updateDeal);
 app.delete("/api/deleteDeal/:id", dealController.deleteDeal);
-// app.get("/api/getDealsBySector/:sectorId", dealController.getDealsBySector);
-// app.get("/api/getDealsByStage/:stageId", dealController.getDealsByStage);
-// app.get("/api/getDealsByGeography/:geography", dealController.getDealsByGeography);
-// app.get("/api/getDealsByTicketSize/:ticketSizeId", dealController.getDealsByTicketSize);
 app.get("/api/getDealsByStatus/:statusId", dealController.getDealsByStatus);
 app.get("/api/getDealsByPriority/:priority", dealController.getDealsByPriority);
 app.get("/api/getDealsByVisibility/:visibility", dealController.getDealsByVisibility);
-app.get("/api/searchDeals", dealController.searchDeals);
+
+// Blog endpoints
+app.post("/api/createBlog", handleMultipleBlogFiles, blogController.createBlog);
+app.get("/api/getAllBlogs", blogController.getAllBlogs);
+app.get("/api/getBlogById/:id", blogController.getBlogById);
+app.get("/api/getBlogBySlug/:slug", blogController.getBlogBySlug);
+app.put("/api/updateBlog/:id", handleMultipleBlogFiles, blogController.updateBlog);
+app.delete("/api/deleteBlog/:id", blogController.deleteBlog);
+
+// Testimonial endpoints
+app.post("/api/createTestimonial", handleTestimonialImageUpload, testimonialController.createTestimonial);
+app.get("/api/getAllTestimonials", testimonialController.getAllTestimonials);
+app.get("/api/getTestimonialById/:id", testimonialController.getTestimonialById);
+app.put("/api/updateTestimonial/:id", handleTestimonialImageUpload, testimonialController.updateTestimonial);
+app.delete("/api/deleteTestimonial/:id", testimonialController.deleteTestimonial);
+
+// Public Home endpoints
+app.get("/api/getPublicHomeData", publicHomeController.getPublicHomeData);
+
 
 module.exports = app;

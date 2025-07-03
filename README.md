@@ -11,6 +11,7 @@ A comprehensive Node.js backend API for managing investment deals, investors, an
 - **Status**: Deal and investor status management
 - **Ticket Sizes**: Investment ticket size ranges
 - **Deals**: Comprehensive deal management with file uploads
+- **Testimonials**: Customer testimonials with user images and messages
 
 ### Deals Module Features
 - Full CRUD operations for deals
@@ -95,6 +96,16 @@ A comprehensive Node.js backend API for managing investment deals, investors, an
 - `GET /api/getAllEOIs` - Get all expressions of interest
 - `GET /api/getEOIsByInvestor/:investor_id` - Get all EOIs submitted by specific investor
 
+### Testimonials
+- `POST /api/createTestimonial` - Create new testimonial (with image upload)
+- `GET /api/getAllTestimonials` - Get all testimonials
+- `GET /api/getTestimonialById/:id` - Get testimonial by ID
+- `PUT /api/updateTestimonial/:id` - Update testimonial (with image upload)
+- `DELETE /api/deleteTestimonial/:id` - Delete testimonial (soft delete)
+
+### Public Home
+- `GET /api/getPublicHomeData` - Get public home data (latest 4 blogs + latest 3 deals + all testimonials)
+
 ## Authentication
 
 ### Investor Registration
@@ -158,6 +169,100 @@ Investors can login using their email and password. The system checks if the acc
 **Note:** The JWT token should be included in the Authorization header for protected routes:
 ```
 Authorization: Bearer <token>
+```
+
+## Testimonial Data Structure
+
+### Create/Update Testimonial
+**Request Body (multipart/form-data):**
+```json
+{
+  "user_img": "file", // Image file (JPEG, PNG, GIF, WebP) - max 5MB
+  "user_name": "John Doe",
+  "investor_type": "Angel Investor",
+  "message": "This platform has been incredible for finding great investment opportunities..."
+}
+```
+
+**Response:**
+```json
+{
+  "result_code": 200,
+  "status": "S",
+  "result_info": {
+    "_id": "testimonial_id",
+    "user_img": "files\\testimonials\\testimonial-image-1234567890.jpg",
+    "user_name": "John Doe",
+    "investor_type": "Angel Investor",
+    "message": "This platform has been incredible for finding great investment opportunities...",
+    "is_active": true,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+## Public Home Data Structure
+
+### Get Public Home Data
+**Request:** `GET /api/getPublicHomeData`
+
+**Response:**
+```json
+{
+  "result_code": 200,
+  "status": "S",
+  "result_info": {
+    "latest_blogs": [
+      {
+        "_id": "blog_id_1",
+        "title": "Latest Blog Title",
+        "slug": "latest-blog-title",
+        "excerpt": "This is a brief excerpt of the blog content...",
+        "featured_image": {
+          "filename": "blog-image-1234567890.jpg",
+          "path": "files\\blogs\\images\\blog-image-1234567890.jpg"
+        },
+        "read_time": 5,
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "latest_deals": [
+      {
+        "_id": "deal_id_1",
+        "deal_title": "Latest Deal Title",
+        "slug": "latest-deal-title",
+        "sector": "Technology",
+        "stage": "Series A",
+        "geography": "North America",
+        "ticket_size_range": "$1M - $5M",
+        "expected_irr": "25-35%",
+        "timeline": "6-12 months",
+        "summary": "Brief summary of the deal...",
+        "image": {
+          "filename": "deal-image-1234567890.jpg",
+          "path": "files\\deals\\images\\deal-image-1234567890.jpg"
+        },
+        "deal_icon": {
+          "filename": "deal-icon-1234567890.jpg",
+          "path": "files\\deals\\icons\\deal-icon-1234567890.jpg"
+        },
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "testimonials": [
+      {
+        "_id": "testimonial_id_1",
+        "user_img": "files\\testimonials\\testimonial-image-1234567890.jpg",
+        "user_name": "John Doe",
+        "investor_type": "Angel Investor",
+        "message": "This platform has been incredible...",
+        "is_active": true,
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+}
 ```
 
 ## Installation
