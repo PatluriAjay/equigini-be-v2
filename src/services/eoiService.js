@@ -5,14 +5,30 @@ const { create_pdf } = require("html-to-pdf-pup");
 const fs = require("fs");
 const path = require("path");
 
+// Helper function to get logo as base64
+const getLogoBase64 = () => {
+  const logoPath = path.join(__dirname, "../assets/equigini-logo.webp");
+  try {
+    const logoBuffer = fs.readFileSync(logoPath);
+    return logoBuffer.toString('base64');
+  } catch (error) {
+    console.error("Error reading logo file:", error);
+    return null;
+  }
+};
+
 // Helper to generate EOI HTML
 const generateEOIHtml = (eoi, investor, deal) => {
+  const logoBase64 = getLogoBase64();
+  const logoImg = logoBase64 ? `<img src="data:image/webp;base64,${logoBase64}" alt="Equigini Logo" style="width: 120px; height: auto; position: absolute; top: 20px; right: 20px;">` : '';
+  
   return `
     <html>
       <head>
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-          .container { max-width: 800px; margin: 32px auto;  padding: 32px 28px; }
+          .container { max-width: 600px; max-height: 800px; margin: 32px auto; padding: 32px 28px; position: relative; }
+          .logo-container { position: absolute; top: 20px; right: 20px; }
           h2 { color: #A330Ae; margin-bottom: 24px; letter-spacing: 0.5px; }
           h3 { margin-top: 32px; margin-bottom: 12px; color: #222; font-size: 1.1rem; }
           table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
@@ -25,6 +41,7 @@ const generateEOIHtml = (eoi, investor, deal) => {
       </head>
       <body>
         <div class="container">
+          ${logoImg}
           <h2>Expression of Interest (EOI) Summary</h2>
           <div class="section">
             <h3>Investor Details</h3>

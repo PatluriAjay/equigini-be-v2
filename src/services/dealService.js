@@ -1,4 +1,6 @@
 const Deal = require("../models/deal");
+const NDA = require("../models/nda");
+const EOI = require("../models/eoi");
 
 // Helper function to generate slug
 const generateSlug = (title) => {
@@ -66,20 +68,70 @@ exports.updateDeal = async (id, dealData) => {
 };
 
 exports.getDealById = async (id) => {
-  return await Deal.findById(id)
+  const deal = await Deal.findById(id)
     .populate('sector', 'name')
     .populate('stage', 'name')
     .populate('ticket_size_range', 'name')
     .populate('status', 'name');
+
+  if (!deal) {
+    return null;
+  }
+
+  // Get NDA agreements for this deal
+  const ndaAgreements = await NDA.find({ 
+    deal_id: deal._id.toString(),
+    is_active: true 
+  }).select('investor_name investor_email investor_mobile nda_signed signed_date pdf_path');
+
+  // Get EOI submissions for this deal
+  const eoiSubmissions = await EOI.find({ 
+    deal_id: deal._id.toString(),
+    is_approved: true 
+  }).select('investor_name investor_mobile intended_ticket_size timeline_to_invest preferred_contact_method pdf_path createdAt');
+
+  // Add the related documents to the deal object
+  const dealWithDocuments = deal.toObject();
+  dealWithDocuments.nda_agreements = ndaAgreements;
+  dealWithDocuments.eoi_submissions = eoiSubmissions;
+  dealWithDocuments.nda_count = ndaAgreements.length;
+  dealWithDocuments.eoi_count = eoiSubmissions.length;
+
+  return dealWithDocuments;
 };
 
 // New method to get deal by slug
 exports.getDealBySlug = async (slug) => {
-  return await Deal.findOne({ slug })
+  const deal = await Deal.findOne({ slug })
     .populate('sector', 'name')
     .populate('stage', 'name')
     .populate('ticket_size_range', 'name')
     .populate('status', 'name');
+
+  if (!deal) {
+    return null;
+  }
+
+  // Get NDA agreements for this deal
+  const ndaAgreements = await NDA.find({ 
+    deal_id: deal._id.toString(),
+    is_active: true 
+  }).select('investor_name investor_email investor_mobile nda_signed signed_date pdf_path');
+
+  // Get EOI submissions for this deal
+  const eoiSubmissions = await EOI.find({ 
+    deal_id: deal._id.toString(),
+    is_approved: true 
+  }).select('investor_name investor_mobile intended_ticket_size timeline_to_invest preferred_contact_method pdf_path createdAt');
+
+  // Add the related documents to the deal object
+  const dealWithDocuments = deal.toObject();
+  dealWithDocuments.nda_agreements = ndaAgreements;
+  dealWithDocuments.eoi_submissions = eoiSubmissions;
+  dealWithDocuments.nda_count = ndaAgreements.length;
+  dealWithDocuments.eoi_count = eoiSubmissions.length;
+
+  return dealWithDocuments;
 };
 
 exports.getAllDeals = async () => {

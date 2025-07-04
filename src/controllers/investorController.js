@@ -3,11 +3,14 @@ const investorService = require("../services/investorService");
 // Create a new investor
 exports.createInvestor = async (req, res) => {
   try {
-    const investor = await investorService.createInvestor(req.body);
+    const result = await investorService.createInvestor(req.body);
     res.status(200).json({
       result_code: 200,
       status: "S",
-      result_info: investor,
+      result_info: {
+        userAuth: result.userAuth,
+        investor: result.investor
+      },
     });
   } catch (err) {
     res.status(500).json({
@@ -241,35 +244,50 @@ exports.loginInvestor = async (req, res) => {
       });
     }
 
-    // Find investor by email
-    const investor = await require("../models/investor").findOne({ email });
-    if (!investor) {
-      return res.status(401).json({
-        result_code: 401,
-        status: "E",
-        error_info: "Invalid email or password",
-      });
-    }
-
-    // Check approval status
-    if (!investor.is_approved) {
-      return res.status(403).json({
-        result_code: 403,
-        status: "E",
-        error_info: "Your account isn’t approved yet. Please wait."
-      });
-    }
-
-    // Delegate to service for password check and token
+    // Delegate to service for authentication and token generation
     const result = await investorService.loginInvestor(email, password);
     res.json({
       result_code: 200,
       status: "S",
-      result_info: result,
+      result_info: {
+        userAuth: result.userAuth,
+        investor: result.investor,
+        token: result.token
+      },
     });
   } catch (err) {
     res.status(401).json({
       result_code: 401,
+      status: "E",
+      error_info: err.message || err,
+    });
+  }
+};
+
+// Logout investor
+exports.logoutInvestor = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        result_code: 400,
+        status: "E",
+        error_info: "Email is required",
+      });
+    }
+
+    const result = await investorService.logoutInvestor(email);
+    res.json({
+      result_code: 200,
+      status: "S",
+      result_info: {
+        userAuth: result.userAuth
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      result_code: 400,
       status: "E",
       error_info: err.message || err,
     });

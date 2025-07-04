@@ -27,6 +27,7 @@ const stageController = require("./controllers/stageController");
 const statusController = require("./controllers/statusController");
 const ticketsizeController = require("./controllers/ticketsizeController");
 const investorController = require("./controllers/investorController");
+const authController = require("./controllers/authController");
 const dealController = require("./controllers/dealController");
 const eoiController = require("./controllers/eoiController");
 const watchListController = require("./controllers/watchListController");
@@ -63,9 +64,12 @@ app.get("/api/getTicketSizeInfo/:id", ticketsizeController.getTicketSizeById);
 app.put("/api/updateTicketSize/:id", ticketsizeController.updateTicketSize);
 app.delete("/api/deleteTicketSize/:id", ticketsizeController.deleteTicketSize);
 
+// Authentication endpoints (unified for admin, analyst and investor)
+app.post("/api/login", authController.login);
+app.post("/api/logout", authController.logout);
+
 // Investor endpoints
 app.post("/api/createInvestor", investorController.createInvestor);
-app.post("/api/loginInvestor", investorController.loginInvestor);
 app.get("/api/getInvestorInfo/:id", investorController.getInvestorById);
 app.get("/api/getAllInvestors", investorController.getAllInvestors);
 app.put("/api/updateInvestor/:id", investorController.updateInvestor);

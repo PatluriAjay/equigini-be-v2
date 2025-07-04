@@ -1,17 +1,21 @@
 const Investor = require("../models/investor");
+const UserAuth = require("../models/userAuth");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 
 exports.createInvestor = async (investorData) => {
-  // Check for duplicate email
-  const existingEmail = await Investor.findOne({ email: investorData.email });
-  if (existingEmail) {
+  // Check for duplicate email in both tables
+  const existingEmailInvestor = await Investor.findOne({ email: investorData.email });
+  const existingEmailUserAuth = await UserAuth.findOne({ email: investorData.email });
+  if (existingEmailInvestor || existingEmailUserAuth) {
     throw new Error("Email already exists");
   }
 
-  // Check for duplicate mobile number
-  const existingMobile = await Investor.findOne({ mobile_number: investorData.mobile_number });
-  if (existingMobile) {
+  // Check for duplicate mobile number in both tables
+  const existingMobileInvestor = await Investor.findOne({ mobile_number: investorData.mobile_number });
+  const existingMobileUserAuth = await UserAuth.findOne({ mobile: investorData.mobile_number });
+  if (existingMobileInvestor || existingMobileUserAuth) {
     throw new Error("Mobile number already exists");
   }
 
@@ -23,17 +27,47 @@ exports.createInvestor = async (investorData) => {
     }
   }
 
+  // Generate correl_id (10 characters with strings and numbers)
+  const correl_id = uuidv4().replace(/-/g, '').substring(0, 10);
+
   // Hash the password
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(investorData.password, saltRounds);
   
-  // Replace the plain password with hashed password
+  // Prepare data for userAuth table
+  const userAuthData = {
+    correl_id: correl_id,
+    name: investorData.full_name,
+    mobile: investorData.mobile_number,
+    email: investorData.email,
+    password: hashedPassword,
+    role: "investor" 
+  };
+
+  // Prepare data for investor table
   const investorDataWithHashedPassword = {
     ...investorData,
+    correl_id: correl_id,
     password: hashedPassword
   };
 
-  return await Investor.create(investorDataWithHashedPassword);
+  try {
+    // Create both records
+    const userAuth = await UserAuth.create(userAuthData);
+    const investor = await Investor.create(investorDataWithHashedPassword);
+
+    return {
+      userAuth: userAuth,
+      investor: investor
+    };
+  } catch (error) {
+    // If either creation fails, try to clean up the other record
+    if (error.code === 11000) {
+      // Duplicate key error
+      throw new Error("Email or mobile number already exists");
+    }
+    throw error;
+  }
 };
 
 exports.updateInvestor = async (id, investorData) => {
@@ -151,6 +185,12 @@ exports.getApprovedInvestors = async () => {
 
 // Login investor
 exports.loginInvestor = async (email, password) => {
+  // Find user in userAuth table by email
+  const userAuth = await UserAuth.findOne({ email: email });
+  if (!userAuth) {
+    throw new Error("Invalid email or password");
+  }
+
   // Find investor by email
   const investor = await Investor.findOne({ email: email });
   if (!investor) {
@@ -162,30 +202,71 @@ exports.loginInvestor = async (email, password) => {
     throw new Error("Account is deactivated. Please contact admin.");
   }
 
-  // Compare password
-  const isPasswordValid = await bcrypt.compare(password, investor.password);
+  // Check if investor is approved
+  if (!investor.is_approved) {
+    throw new Error("Your account isn't approved yet. Please wait.");
+  }
+
+  // Compare password (check against userAuth password)
+  const isPasswordValid = await bcrypt.compare(password, userAuth.password);
   if (!isPasswordValid) {
     throw new Error("Invalid email or password");
   }
 
+  // Update last_login_date_time in userAuth table
+  await UserAuth.findByIdAndUpdate(
+    userAuth._id,
+    { last_login_date_time: new Date() },
+    { new: true }
+  );
+
   // Generate JWT token
   const token = jwt.sign(
     { 
-      id: investor._id, 
+      id: investor._id,
+      correl_id: userAuth.correl_id,
       email: investor.email,
       full_name: investor.full_name,
-      investor_type: investor.investor_type
+      investor_type: investor.investor_type,
+      role: userAuth.role
     },
     process.env.JWT_SECRET || 'your-secret-key',
     { expiresIn: '24h' }
   );
 
-  // Return investor data without password and token
+  // Return data from both tables without passwords
+  const userAuthData = userAuth.toObject();
   const investorData = investor.toObject();
+  delete userAuthData.password;
   delete investorData.password;
 
   return {
+    userAuth: userAuthData,
     investor: investorData,
     token: token
+  };
+};
+
+// Logout investor
+exports.logoutInvestor = async (email) => {
+  // Find user in userAuth table by email
+  const userAuth = await UserAuth.findOne({ email: email });
+  if (!userAuth) {
+    throw new Error("User not found");
+  }
+
+  // Update last_logout_date_time in userAuth table
+  const updatedUserAuth = await UserAuth.findByIdAndUpdate(
+    userAuth._id,
+    { last_logout_date_time: new Date() },
+    { new: true }
+  );
+
+  // Return updated userAuth data without password
+  const userAuthData = updatedUserAuth.toObject();
+  delete userAuthData.password;
+
+  return {
+    userAuth: userAuthData
   };
 }; 

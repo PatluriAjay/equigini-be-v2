@@ -5,6 +5,18 @@ const { create_pdf } = require("html-to-pdf-pup");
 const fs = require("fs");
 const path = require("path");
 
+// Helper function to get logo as base64
+const getLogoBase64 = () => {
+  const logoPath = path.join(__dirname, "../assets/equigini-logo.webp");
+  try {
+    const logoBuffer = fs.readFileSync(logoPath);
+    return logoBuffer.toString('base64');
+  } catch (error) {
+    console.error("Error reading logo file:", error);
+    return null;
+  }
+};
+
 // NDA content template (from frontend)
 // Use a function to inject investor name dynamically
 const getNDAContent = (investorName) => `
@@ -51,36 +63,98 @@ const getNDAContent = (investorName) => `
 // Helper to generate NDA HTML
 const generateNDAHtml = (nda, investor, deal) => {
   const ndaContent = getNDAContent(investor.full_name);
+  const logoBase64 = getLogoBase64();
+  const logoImg = logoBase64
+    ? `<img src="data:image/webp;base64,${logoBase64}" alt="Equigini Logo" style="width: 120px; height: auto; position: absolute; top: 20px; right: 20px;">`
+    : '';
+
   return `
     <html>
       <head>
         <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif;  margin: 0; padding: 0; }
-          .container { max-width: 800px; margin: 32px auto; border-radius: 10px;  padding: 32px 28px; }
-          h2 { color: #A330Ae; margin-bottom: 24px; letter-spacing: 0.5px; text-align: center; }
-          h3 { margin-top: 32px; margin-bottom: 12px; color: #222; font-size: 1.1rem; }
-          table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
-          th, td { border: 1px solid #e0c6f5; padding: 10px 14px; text-align: left; font-size: 1rem; }
-          th { background: #f3eaff; color: #A330Ae; font-weight: 600; width: 30%; }
-          td { background: #f9f3fd; color: #222; width: 70%; }
-          .section { margin-bottom: 24px; }
-          .footer { margin-top: 32px; font-size: 12px; color: #888; text-align: right; }
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 800px;
+            margin: 32px auto;
+            padding: 32px 28px;
+            position: relative;
+          }
+          .logo-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+          }
+          h2 {
+            color: #A330Ae;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+            text-align: center;
+          }
+          h3 {
+            margin-top: 32px;
+            margin-bottom: 12px;
+            color: #222;
+            font-size: 1.1rem;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 8px;
+          }
+          th, td {
+            border: 1px solid #e0c6f5;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 1rem;
+          }
+          th {
+            background: #f3eaff;
+            color: #A330Ae;
+            font-weight: 600;
+            width: 30%;
+          }
+          td {
+            background: #f9f3fd;
+            color: #222;
+            width: 70%;
+          }
+          .section {
+            margin-bottom: 24px;
+          }
+          .footer {
+            margin-top: 32px;
+            font-size: 12px;
+            color: #888;
+            text-align: right;
+          }
+
+          /* Page break styles */
+          .page {
+            page-break-before: always;
+          }
+          .page:first-of-type {
+            page-break-before: auto;
+          }
+
+          @media print {
+            .page {
+              page-break-before: always;
+            }
+            .page:first-of-type {
+              page-break-before: auto;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="container">
+        <div class="container page">
+          ${logoImg}
           <h2>NON-DISCLOSURE AGREEMENT</h2>
-          <div class="section">
-            <h3>Investor Details</h3>
-            <table>
-              <tr><th>Name</th><td>${investor.full_name}</td></tr>
-              <tr><th>Email</th><td>${investor.email}</td></tr>
-              <tr><th>Mobile</th><td>${investor.mobile_number}</td></tr>
-              <tr><th>Type</th><td>${investor.investor_type}</td></tr>
-              <tr><th>Geography</th><td>${investor.geography}</td></tr>
-              <tr><th>Investment Range</th><td>${investor.investment_range}</td></tr>
-            </table>
-          </div>
+
           <div class="section">
             <h3>Deal Details</h3>
             <table>
@@ -93,6 +167,23 @@ const generateNDAHtml = (nda, investor, deal) => {
               <tr><th>Timeline</th><td>${deal.timeline}</td></tr>
             </table>
           </div>
+        </div>
+
+        <div class="container page">
+          <div class="section">
+            <h3>Investor Details</h3>
+            <table>
+              <tr><th>Name</th><td>${investor.full_name}</td></tr>
+              <tr><th>Email</th><td>${investor.email}</td></tr>
+              <tr><th>Mobile</th><td>${investor.mobile_number}</td></tr>
+              <tr><th>Type</th><td>${investor.investor_type}</td></tr>
+              <tr><th>Geography</th><td>${investor.geography}</td></tr>
+              <tr><th>Investment Range</th><td>${investor.investment_range}</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="container page">
           <div class="section">
             <h3>Agreement Content</h3>
             <div style="background:#f9f3fd; border:1px solid #e0c6f5; padding:18px; border-radius:6px; margin-bottom:12px; font-size:1rem; color:#333;">
@@ -105,6 +196,7 @@ const generateNDAHtml = (nda, investor, deal) => {
     </html>
   `;
 };
+
 
 // Sign NDA (create or update NDA agreement)
 exports.signNDA = async (ndaData) => {
