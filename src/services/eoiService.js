@@ -83,7 +83,7 @@ const generateEOIHtml = (eoi, investor, deal) => {
 };
 
 exports.createEOI = async (eoiData) => {
-  // Save EOI first (to get _id)
+  // Save EOI first (to get _id for filename)
   const eoi = await EOI.create(eoiData);
 
   // Fetch investor and deal details
@@ -93,19 +93,23 @@ exports.createEOI = async (eoiData) => {
   // Generate HTML
   const html = generateEOIHtml(eoi, investor, deal);
 
-  // Generate PDF and convert to base64
+  // Generate PDF
   const pdfBuffer = await create_pdf(html);
-  const pdfBase64 = pdfBuffer.toString('base64');
+  // Save PDF to disk
+  const pdfDir = path.join(__dirname, "../files/eoi");
+  if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+  const pdfPath = path.join(pdfDir, `eoi-${eoi._id}.pdf`);
+  fs.writeFileSync(pdfPath, pdfBuffer);
 
-  // Update EOI with PDF content as base64
-  eoi.pdf_content = pdfBase64;
+  // Update EOI with PDF path (relative)
+  eoi.pdf_path = `files/eoi/eoi-${eoi._id}.pdf`;
   await eoi.save();
 
   return eoi;
 };
 
 exports.getAllEOIs = async () => {
-  // Return all EOIs including pdf_content
+  // Return all EOIs including pdf_path
   return await EOI.find();
 };
 

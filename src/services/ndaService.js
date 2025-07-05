@@ -2,12 +2,14 @@ const NDA = require("../models/nda");
 const Investor = require("../models/investor");
 const Deal = require("../models/deal");
 const { create_pdf } = require("html-to-pdf-pup");
+const fs = require("fs");
+const path = require("path");
 
 // Helper function to get logo as base64
 const getLogoBase64 = () => {
-  const logoPath = require("path").join(__dirname, "../assets/equigini-logo.webp");
+  const logoPath = path.join(__dirname, "../assets/equigini-logo.webp");
   try {
-    const logoBuffer = require("fs").readFileSync(logoPath);
+    const logoBuffer = fs.readFileSync(logoPath);
     return logoBuffer.toString('base64');
   } catch (error) {
     console.error("Error reading logo file:", error);
@@ -70,89 +72,89 @@ const generateNDAHtml = (nda, investor, deal) => {
     <html>
       <head>
         <style>
-          body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            margin: 0; 
-            padding: 0; 
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
           }
-          .container { 
-            max-width: 600px; 
-            height: 800px; 
-            margin: 32px auto; 
-            padding: 32px 28px; 
-            position: relative; 
-            page-break-after: always;
+          .container {
+            max-width: 800px;
+            margin: 32px auto;
+            padding: 32px 28px;
+            position: relative;
           }
-          .container:last-child {
-            page-break-after: auto;
+          .logo-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
           }
-          .logo-container { 
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-          }
-          h2 { 
-            color: #A330Ae; 
-            margin-bottom: 24px; 
-            letter-spacing: 0.5px; 
+          h2 {
+            color: #A330Ae;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
             text-align: center;
           }
-          h3 { 
-            margin-top: 32px; 
-            margin-bottom: 12px; 
-            color: #222; 
-            font-size: 1.1rem; 
+          h3 {
+            margin-top: 32px;
+            margin-bottom: 12px;
+            color: #222;
+            font-size: 1.1rem;
           }
-          table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            margin-bottom: 8px; 
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 8px;
           }
-          th, td { 
-            border: 1px solid #e0c6f5; 
-            padding: 10px 14px; 
-            text-align: left; 
-            font-size: 1rem; 
+          th, td {
+            border: 1px solid #e0c6f5;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 1rem;
           }
-          th { 
-            background: #f3eaff; 
-            color: #A330Ae; 
-            font-weight: 600; 
-            width: 30%; 
+          th {
+            background: #f3eaff;
+            color: #A330Ae;
+            font-weight: 600;
+            width: 30%;
           }
-          td { 
-            background: #f9f3fd; 
-            color: #222; 
-            width: 70%; 
+          td {
+            background: #f9f3fd;
+            color: #222;
+            width: 70%;
           }
-          .section { 
-            margin-bottom: 24px; 
+          .section {
+            margin-bottom: 24px;
           }
-          .footer { 
-            margin-top: 32px; 
-            font-size: 12px; 
-            color: #888; 
-            text-align: right; 
+          .footer {
+            margin-top: 32px;
+            font-size: 12px;
+            color: #888;
+            text-align: right;
           }
-          .nda-content {
-            background: #f9f3fd; 
-            border: 1px solid #e0c6f5; 
-            padding: 18px; 
-            border-radius: 6px; 
-            margin-bottom: 12px; 
-            font-size: 0.9rem; 
-            color: #333;
-            height: 500px;
-            overflow-y: auto;
+
+          /* Page break styles */
+          .page {
+            page-break-before: always;
+          }
+          .page:first-of-type {
+            page-break-before: auto;
+          }
+
+          @media print {
+            .page {
+              page-break-before: always;
+            }
+            .page:first-of-type {
+              page-break-before: auto;
+            }
           }
         </style>
       </head>
       <body>
-        <!-- Page 1: Deal Details -->
-        <div class="container">
+        <div class="container page">
           ${logoImg}
           <h2>NON-DISCLOSURE AGREEMENT</h2>
-          
+
           <div class="section">
             <h3>Deal Details</h3>
             <table>
@@ -165,15 +167,9 @@ const generateNDAHtml = (nda, investor, deal) => {
               <tr><th>Timeline</th><td>${deal.timeline}</td></tr>
             </table>
           </div>
-          
-          <div class="footer">Generated on ${new Date().toLocaleString()}</div>
         </div>
 
-        <!-- Page 2: Investor Details -->
-        <div class="container">
-          ${logoImg}
-          <h2>NON-DISCLOSURE AGREEMENT</h2>
-          
+        <div class="container page">
           <div class="section">
             <h3>Investor Details</h3>
             <table>
@@ -185,22 +181,15 @@ const generateNDAHtml = (nda, investor, deal) => {
               <tr><th>Investment Range</th><td>${investor.investment_range}</td></tr>
             </table>
           </div>
-          
-          <div class="footer">Generated on ${new Date().toLocaleString()}</div>
         </div>
 
-        <!-- Page 3: Agreement Content -->
-        <div class="container">
-          ${logoImg}
-          <h2>NON-DISCLOSURE AGREEMENT</h2>
-          
+        <div class="container page">
           <div class="section">
             <h3>Agreement Content</h3>
-            <div class="nda-content">
+            <div style="background:#f9f3fd; border:1px solid #e0c6f5; padding:18px; border-radius:6px; margin-bottom:12px; font-size:1rem; color:#333;">
               ${ndaContent}
             </div>
           </div>
-          
           <div class="footer">Generated on ${new Date().toLocaleString()}</div>
         </div>
       </body>
@@ -232,22 +221,21 @@ exports.signNDA = async (ndaData) => {
         signed_date: ndaData.nda_signed ? new Date() : null
       });
     }
-    
     // Fetch investor and deal details
     const investor = await Investor.findById(nda.investor_id);
     const deal = await Deal.findById(nda.deal_id);
-    
     // Generate HTML
     const html = generateNDAHtml(nda, investor, deal);
-    
-    // Generate PDF and convert to base64
+    // Generate PDF
     const pdfBuffer = await create_pdf(html);
-    const pdfBase64 = pdfBuffer.toString('base64');
-    
-    // Update NDA with PDF content as base64
-    nda.pdf_content = pdfBase64;
+    // Save PDF to disk
+    const pdfDir = path.join(__dirname, "../files/nda");
+    if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+    const pdfPath = path.join(pdfDir, `nda-${nda._id}.pdf`);
+    fs.writeFileSync(pdfPath, pdfBuffer);
+    // Update NDA with PDF path (relative)
+    nda.pdf_path = `files/nda/nda-${nda._id}.pdf`;
     await nda.save();
-    
     return nda;
   } catch (error) {
     throw error;
@@ -274,8 +262,7 @@ exports.isNDASigned = async (investorId, dealId) => {
       is_signed: nda.nda_signed,
       signed_date: nda.signed_date,
       investor_name: nda.investor_name,
-      deal_name: nda.deal_name,
-      pdf_content: nda.pdf_content || null
+      deal_name: nda.deal_name
     };
   } catch (error) {
     throw error;
