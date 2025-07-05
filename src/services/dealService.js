@@ -88,7 +88,7 @@ exports.getDealById = async (id) => {
   const eoiSubmissions = await EOI.find({ 
     deal_id: deal._id.toString(),
     is_approved: true 
-  }).select('investor_name investor_mobile intended_ticket_size timeline_to_invest preferred_contact_method pdf_path createdAt');
+  }).select('investor_name investor_mobile intended_ticket_size timeline_to_invest preferred_contact_method pdf_content createdAt');
 
   // Add the related documents to the deal object
   const dealWithDocuments = deal.toObject();
@@ -122,7 +122,7 @@ exports.getDealBySlug = async (slug) => {
   const eoiSubmissions = await EOI.find({ 
     deal_id: deal._id.toString(),
     is_approved: true 
-  }).select('investor_name investor_mobile intended_ticket_size timeline_to_invest preferred_contact_method pdf_path createdAt');
+  }).select('investor_name investor_mobile intended_ticket_size timeline_to_invest preferred_contact_method pdf_content createdAt');
 
   // Add the related documents to the deal object
   const dealWithDocuments = deal.toObject();

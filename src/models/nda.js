@@ -40,7 +40,7 @@ const ndaSchema = new mongoose.Schema({
     type: Boolean, 
     default: true 
   },
-  pdf_path: { type: String },
+  pdf_content: { type: String }, // Store PDF content as base64 instead of file path
 }, { 
   timestamps: true 
 });

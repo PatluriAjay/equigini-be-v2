@@ -12,7 +12,7 @@ const eoiSchema = new mongoose.Schema({
   preferred_contact_method: { type: String, required: true },
   created_by: { type: Number, required: true },
   is_approved: { type: Boolean, default: false },
-  pdf_path: { type: String },
+  pdf_content: { type: String }, // Store PDF content as base64 instead of file path
 },
   { timestamps: true }
 );

@@ -29,7 +29,7 @@ exports.getAllEOIs = async (req, res) => {
       status: "S",
       result_info: sortedEOIs.map(eoi => ({
         ...eoi.toObject(),
-        pdf_path: eoi.pdf_path || null
+        pdf_content: eoi.pdf_content || null
       })),
     });
   } catch (err) {

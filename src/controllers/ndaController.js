@@ -41,7 +41,10 @@ exports.signNDA = async (req, res) => {
       status: "S",
       result_info: {
         message: nda_signed ? "NDA signed successfully" : "NDA agreement updated",
-        nda_agreement: result
+        nda_agreement: {
+          ...result.toObject(),
+          pdf_content: result.pdf_content || null
+        }
       }
     });
   } catch (err) {
@@ -93,7 +96,7 @@ exports.getAllNDAAgreements = async (req, res) => {
         count: ndaAgreements.length,
         agreements: ndaAgreements.map(nda => ({
           ...nda.toObject(),
-          pdf_path: nda.pdf_path || null
+          pdf_content: nda.pdf_content || null
         }))
       }
     });
@@ -117,7 +120,7 @@ exports.getAllSignedNDAs = async (req, res) => {
         count: signedNDAs.length,
         signed_agreements: signedNDAs.map(nda => ({
           ...nda.toObject(),
-          pdf_path: nda.pdf_path || null
+          pdf_content: nda.pdf_content || null
         }))
       }
     });
